@@ -39,6 +39,14 @@ export function getBoardAsArray(board) {
   return result;
 }
 
+export function getBoardFullArray(board){
+    return getBoardAsArray(board).reduce((acc, row, y) => {
+        const rowArr = row.split('').map((item, x) => ({x: x, y: y, el: item}));
+        acc = [...acc, ...rowArr];
+        return acc
+    }, [])
+}
+
 export function getBoardSize(board) {
     return Math.sqrt(board.length);
 }

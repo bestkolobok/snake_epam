@@ -21,15 +21,18 @@
  */
 import { ELEMENT, COMMANDS } from './constants';
 import {
-  isGameOver, getHeadPosition, getElementByXY
+  isGameOver, getHeadPosition, getElementByXY, getBoardAsArray, getBoardFullArray
 } from './utils';
 
 // Bot Example
 export function getNextSnakeMove(board, logger) {
+
     if (isGameOver(board)) {
         return '';
     }
+
     const headPosition = getHeadPosition(board);
+    // console.log('headPosition', headPosition)
     if (!headPosition) {
         return '';
     }
@@ -37,12 +40,16 @@ export function getNextSnakeMove(board, logger) {
 
     const surround = getSurround(board, headPosition); // (LEFT, UP, RIGHT, DOWN)
     logger('Surround: ' + JSON.stringify(surround));
+    // console.log('surround', surround)
 
     const raitings = surround.map(rateElement);
     logger('Raitings:' + JSON.stringify(raitings));
 
-    const command = getCommandByRaitings(raitings);
+    // let command = getCommandByRaitings(raitings);
+    let command = getCommandByElement(board, 'APPLE');
+    command = getCommandByRaitings(raitings, command);
 
+    // console.log('searchGold(board)', getCommandByElement(board, 'APPLE'))
     return command;
 }
 
@@ -57,31 +64,50 @@ function getSurround(board, position) {
 }
 
 function rateElement(element) {
-    if (element === ELEMENT.NONE) {
-        return 0;
-    }
     if (
         element === ELEMENT.APPLE ||
         element === ELEMENT.GOLD
     ) {
-        return 1;
+        return 2;
     }
-
+    if (element === ELEMENT.NONE) {
+        return 0;
+    }
     return -1;
 }
 
 
-function getCommandByRaitings(raitings) {
+function getCommandByRaitings(raitings, command) {
     var indexToCommand = ['LEFT', 'UP', 'RIGHT', 'DOWN'];
     var maxIndex = 0;
     var max = -Infinity;
     for (var i = 0; i < raitings.length; i++) {
         var r = raitings[i];
+        if (r === 0 && command === indexToCommand[i]){ r = 1 }
         if (r > max) {
             maxIndex = i;
             max = r;
         }
     }
-
     return indexToCommand[maxIndex];
+    // return "UP";
 }
+
+
+function getCommandByElement(board, element = 'GOLD') {
+    const goldArr = getBoardFullArray(board).filter(item => item.el === ELEMENT[element]);
+    const headPosition = getHeadPosition(board);
+    function way (obj){return Math.abs(obj.x-headPosition.x) + Math.abs(obj.y-headPosition.y)}
+    const position = goldArr.reduce((acc,item) => {
+        if (acc) {
+            if(way(item) < way(acc)) return {x: item.x, y: item.y};
+            return acc
+        }
+        return {x: item.x, y: item.y}
+    })
+    if(position.x > headPosition.x) return "RIGHT"
+    if(position.x < headPosition.x) return "LEFT"
+    if(position.y > headPosition.y) return "DOWN"
+    return "UP"
+}
+

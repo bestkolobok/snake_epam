@@ -121,9 +121,11 @@ export function getXYByPosition(board, position) {
     };
 }
 
-export function getElementByXY(board, position) {
-    const size = getBoardSize(board);
-    return board[size * position.y + position.x];
+export function getElementByXY(boardFullArray, position) {
+    // const size = getBoardSize(board);
+    // return board[size * position.y + position.x];
+    const findEl = boardFullArray.find(item => item.x === position.x && item.y === position.y)
+    return findEl.el
 }
 
 export function getLength(board){
@@ -158,14 +160,25 @@ export function checkFly(board){
     return board.indexOf(ELEMENT.HEAD_FLY) !== -1
 }
 
-export function checkFury(board){
-    return board.indexOf(ELEMENT.HEAD_EVIL) !== -1
+export function checkFury(board, fury = 0){
+    if(board.indexOf(ELEMENT.HEAD_EVIL) !== -1){
+        if (fury) return fury - 1;
+        return 10
+    }
+    return 0
 }
 
 export function getWayLength (from, to){return Math.abs(from.x-to.x) + Math.abs(from.y-to.y)}
 
-export function getNextPosition(board, position, element = 'GOLD', skipElements = []){
-    const elementsArr = getBoardFullArray(board).filter(item => item.el === ELEMENT[element]);
+export function getNextPosition(boardFullArray, position, element = 'GOLD', skipElements = []){
+    let elementsArr = [];
+    if(typeof(element) === 'string'){
+        elementsArr = boardFullArray.filter(item => item.el === ELEMENT[element]);
+    }else{
+        elementsArr = boardFullArray.filter(item => {
+            return element.findIndex(itemEl=> item.el === ELEMENT[itemEl]) !== -1;
+        });
+    }
     return elementsArr.reduce((acc,item) => {
         if (acc.x && acc.y) {
             const isSkip = skipElements.findIndex(el=> el.x === item.x && el.y === item.y) !== -1;
@@ -177,4 +190,11 @@ export function getNextPosition(board, position, element = 'GOLD', skipElements 
         }
         return {x: item.x, y: item.y}
     }, {});
+}
+
+export function movieDirection(position, lastPosition){
+    if(position.x > lastPosition.x) return "RIGHT";
+    if(position.x < lastPosition.x) return "LEFT";
+    if(position.y > lastPosition.y) return "DOWN";
+    return "UP"
 }

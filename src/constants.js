@@ -75,7 +75,8 @@ export const ELEMENT = {
     ENEMY_BODY_LEFT_DOWN: '┐',
     ENEMY_BODY_LEFT_UP: '┘',
     ENEMY_BODY_RIGHT_DOWN: '┌',
-    ENEMY_BODY_RIGHT_UP: '└'
+    ENEMY_BODY_RIGHT_UP: '└',
+    ENEMY_STRING: '˅<>˄☺♣♦ø¤×æö*─│┐┘┌└'
 };
 
 export const COMMANDS = {

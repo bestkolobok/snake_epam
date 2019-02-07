@@ -21,27 +21,29 @@
  */
 import { ELEMENT, COMMANDS } from './constants';
 import {
-  isGameOver, getHeadPosition, getElementByXY, getLength, checkFly, checkFury, getWayLength, getNextPosition
+  isGameOver, getHeadPosition, getElementByXY, getLength, checkFly, checkFury, getWayLength, getNextPosition, movieDirection, getBoardFullArray
 } from './utils';
 
 // Bot Example
+let boardFullArray = [];
 let snakeLength = null;
 let isFly = false;
-let isFury = false;
+let isFury = 0;
 let defaultDirection = true;
-// let count = 0;
+let count = 0;
+let lastPosition = {};
 
 export function getNextSnakeMove(board, logger) {
-    // if(count === 10){
-    //     defaultDirection = !defaultDirection;
-    //     count = 0;
-    // }
-    // count++;
+    init(board);
+    if(count === 10){
+        defaultDirection = !defaultDirection;
+        count = 0;
+    }
+    count++;
     snakeLength = getLength(board);
     isFly = checkFly(board);
-    isFury = checkFury(board);
-    console.log('snakeLength', snakeLength);
-
+    isFury = checkFury(board, isFury);
+    console.log('isFury', isFury);
     if (isGameOver(board)) {
         return '';
     }
@@ -61,24 +63,49 @@ export function getNextSnakeMove(board, logger) {
     logger('Raitings:' + JSON.stringify(raitings));
 
     // let command = getCommandByRaitings(raitings);
-    let command = getCommandByElement(board);
-    command = getCommandByRaitings(raitings, command);
+    let elCommands = getCommandByElement(board);
+    // console.log('command2', command)
+    let command = getCommandByRaitings(raitings, elCommands);
+    // console.log('command3', command)
+    console.log('c')
 
     // console.log('searchGold(board)', getCommandByElement(board, 'APPLE'))
+    lastPosition = headPosition;
     return command;
+}
+
+function init (board){
+    boardFullArray = getBoardFullArray(board);
+    function findElement(position){
+        const findEl = boardFullArray.find(item => item.x === position.x && item.y === position.y)
+        return findEl
+    }
+    boardFullArray = boardFullArray.map(item => {
+        if(
+            (item.y > 6 && item.y < 23 && item.x > 7 && item.x < 23) && (
+                (findElement({x: item.x, y: item.y+1}).el === ELEMENT.WALL && findElement({x: item.x, y: item.y-1}).el === ELEMENT.WALL) ||
+                (findElement({x: item.x+1, y: item.y}).el === ELEMENT.WALL && findElement({x: item.x-1, y: item.y}).el === ELEMENT.WALL)
+            )
+        ){
+            return {x: item.x, y: item.y, el: ELEMENT.WALL}
+        }else{
+            return item
+        }
+    });
 }
 
 function getSurround(board, position) {
     const p = position;
     return [
-        getElementByXY(board, {x: p.x - 1, y: p.y }), // LEFT
-        getElementByXY(board, {x: p.x, y: p.y -1 }), // UP
-        getElementByXY(board, {x: p.x + 1, y: p.y}), // RIGHT
-        getElementByXY(board, {x: p.x, y: p.y + 1 }) // DOWN
+        getElementByXY(boardFullArray, {x: p.x - 1, y: p.y }), // LEFT
+        getElementByXY(boardFullArray, {x: p.x, y: p.y -1 }), // UP
+        getElementByXY(boardFullArray, {x: p.x + 1, y: p.y}), // RIGHT
+        getElementByXY(boardFullArray, {x: p.x, y: p.y + 1 }) // DOWN
     ];
 }
 
 function rateElement(element) {
+    console.log('ENEMY_STRING', ELEMENT.ENEMY_STRING.indexOf(element))
     if (
         element === ELEMENT.APPLE ||
         element === ELEMENT.GOLD ||
@@ -87,73 +114,111 @@ function rateElement(element) {
     ) {
         return 3;
     }
+    if(element === ELEMENT.STONE && snakeLength > 10) return 4;
+    if(element === ELEMENT.STONE && snakeLength > 7) return 2;
+    if(element === ELEMENT.STONE && snakeLength > 6) return 1;
+    if(element === ELEMENT.STONE && snakeLength > 4) return -1;
+    if(element === ELEMENT.STONE && isFury > 0) return 4;
 
-    if(element === ELEMENT.STONE && snakeLength > 12) return 3;
-    if(element === ELEMENT.STONE && snakeLength > 9) return 2;
-    if(element === ELEMENT.STONE && snakeLength > 5) return -1;
-
-    if (element === ELEMENT.NONE) {
-        return 0;
-    }
+    if(ELEMENT.ENEMY_STRING.indexOf(element) !== -1 && isFury > 1) return 5;
+    if(ELEMENT.ENEMY_STRING.indexOf(element) !== -1 && isFly) return 0;
+    if (element === ELEMENT.NONE) return 0;
     return -2;
 }
 
-
-function getCommandByRaitings(raitings, command) {
-    console.log('command', command)
+function getCommandByRaitings(raitings, commands) {
     var indexToCommand = ['LEFT', 'UP', 'RIGHT', 'DOWN'];
     var maxIndex = 0;
     var max = -Infinity;
     for (var i = 0; i < raitings.length; i++) {
         var r = raitings[i];
-        if (r === 0 && command === indexToCommand[i]){ r = 1 }
+        if (r >= 0 && commands[0] === indexToCommand[i]){ r = 2 }
+        if (r >= 0 && commands[1] === indexToCommand[i]){ r = 1 }
         if (r > max) {
             maxIndex = i;
             max = r;
         }
     }
     return indexToCommand[maxIndex];
-    // return "UP";
 }
 
 function getCommandByElement(board) {
     const headPosition = getHeadPosition(board);
-    // const position = getNextPosition(board, headPosition, 'APPLE');
+    // const position = getNextPosition(boardFullArray, headPosition, 'APPLE');
 
-    const positionApple = getNextPosition(board, headPosition, 'APPLE');
-    const positionGold = getNextPosition(board, headPosition, 'GOLD');
+    const positionApple = getNextPosition(boardFullArray, headPosition, 'APPLE');
+    const positionGold = getNextPosition(boardFullArray, headPosition, 'GOLD');
+    const positionStone = getNextPosition(boardFullArray, headPosition, 'STONE');
+    const positionFury = getNextPosition(boardFullArray, headPosition, 'FURY_PILL');
+    const positionEnemy = getNextPosition(boardFullArray, headPosition, ['ENEMY_BODY_HORIZONTAL', 'ENEMY_BODY_VERTICAL', 'ENEMY_BODY_LEFT_DOWN', 'ENEMY_BODY_LEFT_UP', 'ENEMY_BODY_RIGHT_DOWN', 'ENEMY_BODY_RIGHT_UP']);
 
+    const lengthToApple = getWayLength(headPosition, positionApple);
     const lengthToGold = getWayLength(headPosition, positionGold);
+    const lengthToStone = getWayLength(headPosition, positionStone);
+    const lengthToFury = getWayLength(headPosition, positionFury);
+    const lengthToEnemy = getWayLength(headPosition, positionEnemy);
+    const lengthFromFuryToStone = getWayLength(positionFury, positionStone);
+
 
     let lengthToApples = 0;
     let previousPositions = [];
     let currentPosition = headPosition;
 
-    for(let i = 0; i < 5; i++){
-        // console.log('currentPosition'+i, currentPosition)
-        const nextPosition = getNextPosition(board, currentPosition, 'APPLE', previousPositions);
+    for(let i = 0; i < 4; i++){
+        const nextPosition = getNextPosition(boardFullArray, currentPosition, 'APPLE', previousPositions);
         lengthToApples += getWayLength(currentPosition, nextPosition);
         previousPositions.push(currentPosition);
         currentPosition = nextPosition;
     }
 
-    const position = isNaN(lengthToGold) || lengthToApples < lengthToGold ? positionApple : positionGold;
-    console.log('position', isNaN(lengthToGold) || lengthToApples < lengthToGold)
-
-
-
-
-    if(defaultDirection){
-        if(position.x > headPosition.x) return "RIGHT";
-        if(position.x < headPosition.x) return "LEFT";
-        if(position.y > headPosition.y) return "DOWN";
-        return "UP"
-    }else{
-        if(position.y > headPosition.y) return "DOWN";
-        if(position.y < headPosition.y) return "UP";
-        if(position.x > headPosition.x) return "RIGHT";
-        return "LEFT";
+    let position = isNaN(lengthToGold) || lengthToApples < lengthToGold || (lengthToApple < lengthToGold && lengthToApple < 5)? positionApple : positionGold;
+    console.log('position1', position);
+    if(lengthToStone < lengthToApple && (isNaN(lengthToGold) || lengthToStone < lengthToGold) && lengthToStone < 10 && snakeLength > 8){
+        position = positionStone;
+    }
+    if(lengthToStone < lengthToApple*2 && (isNaN(lengthToGold) || lengthToStone < lengthToGold*2) && lengthToStone < 30 && snakeLength > 10){
+        position = positionStone;
+    }
+    if(isFury >= lengthToStone){
+        position = positionStone;
+    }
+    if(isFury >= lengthToEnemy){
+        position = positionEnemy;
+    }
+    if(!isNaN(lengthToFury) && lengthToFury < 20 && lengthFromFuryToStone < 10){
+        position = positionFury
     }
 
+    // console.log('position2', position)
+    // console.log('headPosition', headPosition)
+    // console.log('defaultDirection', defaultDirection)
+
+    // console.log('gold', lengthToGold)
+    // console.log('Apple', lengthToApples)
+    // console.log('position', isNaN(lengthToGold) || lengthToApples < lengthToGold)
+
+    // const positionSurround = getSurround(board, position);
+    // const raitings = positionSurround.map(rateElementDefault);
+    const direction = movieDirection(headPosition, lastPosition);
+    defaultDirection = direction === "DOWN" || direction === "UP";
+
+    function setCommand (direction){
+        if(!direction){
+            if(position.x > headPosition.x) return "RIGHT";
+            if(position.x < headPosition.x) return "LEFT";
+            if(position.y > headPosition.y) return "DOWN";
+            return "UP"
+        }else{
+            if(position.y > headPosition.y) return "DOWN";
+            if(position.y < headPosition.y) return "UP";
+            if(position.x > headPosition.x) return "RIGHT";
+            return "LEFT";
+        }
+    }
+
+    const command = setCommand (defaultDirection);
+    const commandTwo = setCommand (!defaultDirection);
+
+    return [command, commandTwo]
 }
 

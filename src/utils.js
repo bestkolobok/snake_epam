@@ -125,3 +125,56 @@ export function getElementByXY(board, position) {
     const size = getBoardSize(board);
     return board[size * position.y + position.x];
 }
+
+export function getLength(board){
+    return board.split('').filter(item => {
+        return (
+            item === ELEMENT.BODY_HORIZONTAL ||
+            item === ELEMENT.BODY_VERTICAL ||
+            item === ELEMENT.BODY_LEFT_DOWN ||
+            item === ELEMENT.BODY_LEFT_UP ||
+            item === ELEMENT.BODY_RIGHT_DOWN ||
+            item === ELEMENT.BODY_RIGHT_UP ||
+
+            item === ELEMENT.TAIL_END_DOWN ||
+            item === ELEMENT.TAIL_END_LEFT ||
+            item === ELEMENT.TAIL_END_UP ||
+            item === ELEMENT.TAIL_END_RIGHT ||
+            item === ELEMENT.TAIL_INACTIVE ||
+
+            item === ELEMENT.HEAD_DOWN ||
+            item === ELEMENT.HEAD_LEFT ||
+            item === ELEMENT.HEAD_RIGHT ||
+            item === ELEMENT.HEAD_UP ||
+            item === ELEMENT.HEAD_DEAD ||
+            item === ELEMENT.HEAD_EVIL ||
+            item === ELEMENT.HEAD_FLY ||
+            item === ELEMENT.HEAD_SLEEP
+        )
+    }).length
+}
+
+export function checkFly(board){
+    return board.indexOf(ELEMENT.HEAD_FLY) !== -1
+}
+
+export function checkFury(board){
+    return board.indexOf(ELEMENT.HEAD_EVIL) !== -1
+}
+
+export function getWayLength (from, to){return Math.abs(from.x-to.x) + Math.abs(from.y-to.y)}
+
+export function getNextPosition(board, position, element = 'GOLD', skipElements = []){
+    const elementsArr = getBoardFullArray(board).filter(item => item.el === ELEMENT[element]);
+    return elementsArr.reduce((acc,item) => {
+        if (acc.x && acc.y) {
+            const isSkip = skipElements.findIndex(el=> el.x === item.x && el.y === item.y) !== -1;
+            if(
+                getWayLength(item, position) < getWayLength(acc, position) &&
+                !((position.x === item.x && position.y === item.y) || isSkip)
+            ) return {x: item.x, y: item.y};
+            return acc
+        }
+        return {x: item.x, y: item.y}
+    }, {});
+}

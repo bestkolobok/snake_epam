@@ -21,11 +21,26 @@
  */
 import { ELEMENT, COMMANDS } from './constants';
 import {
-  isGameOver, getHeadPosition, getElementByXY, getBoardAsArray, getBoardFullArray
+  isGameOver, getHeadPosition, getElementByXY, getLength, checkFly, checkFury, getWayLength, getNextPosition
 } from './utils';
 
 // Bot Example
+let snakeLength = null;
+let isFly = false;
+let isFury = false;
+let defaultDirection = true;
+// let count = 0;
+
 export function getNextSnakeMove(board, logger) {
+    // if(count === 10){
+    //     defaultDirection = !defaultDirection;
+    //     count = 0;
+    // }
+    // count++;
+    snakeLength = getLength(board);
+    isFly = checkFly(board);
+    isFury = checkFury(board);
+    console.log('snakeLength', snakeLength);
 
     if (isGameOver(board)) {
         return '';
@@ -46,7 +61,7 @@ export function getNextSnakeMove(board, logger) {
     logger('Raitings:' + JSON.stringify(raitings));
 
     // let command = getCommandByRaitings(raitings);
-    let command = getCommandByElement(board, 'APPLE');
+    let command = getCommandByElement(board);
     command = getCommandByRaitings(raitings, command);
 
     // console.log('searchGold(board)', getCommandByElement(board, 'APPLE'))
@@ -66,18 +81,26 @@ function getSurround(board, position) {
 function rateElement(element) {
     if (
         element === ELEMENT.APPLE ||
-        element === ELEMENT.GOLD
+        element === ELEMENT.GOLD ||
+        element === ELEMENT.FURY_PILL ||
+        element === ELEMENT.FLYING_PILL
     ) {
-        return 2;
+        return 3;
     }
+
+    if(element === ELEMENT.STONE && snakeLength > 12) return 3;
+    if(element === ELEMENT.STONE && snakeLength > 9) return 2;
+    if(element === ELEMENT.STONE && snakeLength > 5) return -1;
+
     if (element === ELEMENT.NONE) {
         return 0;
     }
-    return -1;
+    return -2;
 }
 
 
 function getCommandByRaitings(raitings, command) {
+    console.log('command', command)
     var indexToCommand = ['LEFT', 'UP', 'RIGHT', 'DOWN'];
     var maxIndex = 0;
     var max = -Infinity;
@@ -93,21 +116,44 @@ function getCommandByRaitings(raitings, command) {
     // return "UP";
 }
 
-
-function getCommandByElement(board, element = 'GOLD') {
-    const goldArr = getBoardFullArray(board).filter(item => item.el === ELEMENT[element]);
+function getCommandByElement(board) {
     const headPosition = getHeadPosition(board);
-    function way (obj){return Math.abs(obj.x-headPosition.x) + Math.abs(obj.y-headPosition.y)}
-    const position = goldArr.reduce((acc,item) => {
-        if (acc) {
-            if(way(item) < way(acc)) return {x: item.x, y: item.y};
-            return acc
-        }
-        return {x: item.x, y: item.y}
-    })
-    if(position.x > headPosition.x) return "RIGHT"
-    if(position.x < headPosition.x) return "LEFT"
-    if(position.y > headPosition.y) return "DOWN"
-    return "UP"
+    // const position = getNextPosition(board, headPosition, 'APPLE');
+
+    const positionApple = getNextPosition(board, headPosition, 'APPLE');
+    const positionGold = getNextPosition(board, headPosition, 'GOLD');
+
+    const lengthToGold = getWayLength(headPosition, positionGold);
+
+    let lengthToApples = 0;
+    let previousPositions = [];
+    let currentPosition = headPosition;
+
+    for(let i = 0; i < 5; i++){
+        // console.log('currentPosition'+i, currentPosition)
+        const nextPosition = getNextPosition(board, currentPosition, 'APPLE', previousPositions);
+        lengthToApples += getWayLength(currentPosition, nextPosition);
+        previousPositions.push(currentPosition);
+        currentPosition = nextPosition;
+    }
+
+    const position = isNaN(lengthToGold) || lengthToApples < lengthToGold ? positionApple : positionGold;
+    console.log('position', isNaN(lengthToGold) || lengthToApples < lengthToGold)
+
+
+
+
+    if(defaultDirection){
+        if(position.x > headPosition.x) return "RIGHT";
+        if(position.x < headPosition.x) return "LEFT";
+        if(position.y > headPosition.y) return "DOWN";
+        return "UP"
+    }else{
+        if(position.y > headPosition.y) return "DOWN";
+        if(position.y < headPosition.y) return "UP";
+        if(position.x > headPosition.x) return "RIGHT";
+        return "LEFT";
+    }
+
 }
 

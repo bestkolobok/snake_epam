@@ -23,6 +23,9 @@ import { ELEMENT, COMMANDS } from './constants';
 import {
   isGameOver, getHeadPosition, getElementByXY, getLength, checkFly, checkFury, getWayLength, getNextPosition, movieDirection, getBoardFullArray
 } from './utils';
+import {
+    getBaseWay
+} from './wayUtils';
 
 // Bot Example
 let boardFullArray = [];
@@ -34,6 +37,7 @@ let count = 0;
 let lastPosition = {};
 
 export function getNextSnakeMove(board, logger) {
+    ////// start INIT /////
     init(board);
     if(count === 10){
         defaultDirection = !defaultDirection;
@@ -44,6 +48,12 @@ export function getNextSnakeMove(board, logger) {
     isFly = checkFly(board);
     isFury = checkFury(board, isFury);
     console.log('isFury', isFury);
+    ////// end INIT /////
+
+    const WAY = getBaseWay(boardFullArray, {x: 3, y: 8}, {x: 9, y: 11});
+    console.log('WAY x', WAY.x)
+    console.log('WAY y', WAY.y)
+
     if (isGameOver(board)) {
         return '';
     }
@@ -105,7 +115,6 @@ function getSurround(board, position) {
 }
 
 function rateElement(element) {
-    console.log('ENEMY_STRING', ELEMENT.ENEMY_STRING.indexOf(element))
     if (
         element === ELEMENT.APPLE ||
         element === ELEMENT.GOLD ||
@@ -123,6 +132,7 @@ function rateElement(element) {
     if(ELEMENT.ENEMY_STRING.indexOf(element) !== -1 && isFury > 1) return 5;
     if(ELEMENT.ENEMY_STRING.indexOf(element) !== -1 && isFly) return 0;
     if (element === ELEMENT.NONE) return 0;
+    if(element === ELEMENT.WALL) return -3;
     return -2;
 }
 
@@ -188,17 +198,6 @@ function getCommandByElement(board) {
     if(!isNaN(lengthToFury) && lengthToFury < 20 && lengthFromFuryToStone < 10){
         position = positionFury
     }
-
-    // console.log('position2', position)
-    // console.log('headPosition', headPosition)
-    // console.log('defaultDirection', defaultDirection)
-
-    // console.log('gold', lengthToGold)
-    // console.log('Apple', lengthToApples)
-    // console.log('position', isNaN(lengthToGold) || lengthToApples < lengthToGold)
-
-    // const positionSurround = getSurround(board, position);
-    // const raitings = positionSurround.map(rateElementDefault);
     const direction = movieDirection(headPosition, lastPosition);
     defaultDirection = direction === "DOWN" || direction === "UP";
 
@@ -218,7 +217,7 @@ function getCommandByElement(board) {
 
     const command = setCommand (defaultDirection);
     const commandTwo = setCommand (!defaultDirection);
-
+    console.log('commandcommandTwo', command, )
     return [command, commandTwo]
 }
 

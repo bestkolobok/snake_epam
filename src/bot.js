@@ -24,7 +24,7 @@ import {
   isGameOver, getHeadPosition, getElementByXY, getLength, checkFly, checkFury, getWayLength, getNextPosition, movieDirection, getBoardFullArray
 } from './utils';
 import {
-    getBaseWay
+    getBaseWay, buildWayByAxe
 } from './wayUtils';
 
 // Bot Example
@@ -47,12 +47,18 @@ export function getNextSnakeMove(board, logger) {
     snakeLength = getLength(board);
     isFly = checkFly(board);
     isFury = checkFury(board, isFury);
-    console.log('isFury', isFury);
     ////// end INIT /////
 
-    const WAY = getBaseWay(boardFullArray, {x: 3, y: 8}, {x: 9, y: 11});
-    console.log('WAY x', WAY.x)
-    console.log('WAY y', WAY.y)
+    // const WAYx = getBaseWay(boardFullArray, {x: 3, y: 8}, {x: 9, y: 11}, 'x');
+    // const WAYy = getBaseWay(boardFullArray, {x: 3, y: 8}, {x: 9, y: 11}, 'y');
+
+    const WAYx = buildWayByAxe (boardFullArray, {x: 23, y: 24}, {x: 19, y: 15}, 'x', 7);
+    // const WAYx = buildWayByAxe (boardFullArray, {x: 6, y: 13}, {x: 10, y: 4}, 'x', 7);
+    // const WAYx2 = buildWayByAxe (boardFullArray, {x: 6, y: 5}, {x: 9, y: 11}, 'x', 7, WAYx);
+    // const WAYy = buildWayByAxe (boardFullArray, {x: 6, y: 5}, {x: 9, y: 11}, 'y', 7);
+    console.log('WAY x', WAYx)
+    // console.log('WAY x2', WAYx2)
+    // console.log('WAY y', WAYy)
 
     if (isGameOver(board)) {
         return '';

@@ -4,7 +4,7 @@ import {findWays} from "./wayUtils";
 
 
 export function getNextPosition (boardFullArray, position, element = 'GOLD', snakeLength, skipElements = []){
-    console.log('getNextPosition', element)
+    console.log('getNextPosition', element);
     let elementsArr = [];
     if(typeof(element) === 'string'){
         elementsArr = boardFullArray.filter(item => item.el === ELEMENT[element]);

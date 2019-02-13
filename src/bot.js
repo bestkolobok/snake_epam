@@ -21,11 +21,10 @@
  */
 import { ELEMENT, COMMANDS } from './constants';
 import {
-  isGameOver, getHeadPosition, getElementByXY, getLength, checkFly, checkFury, getWayLength, getNextPosition, movieDirection, getBoardFullArray
+  isGameOver, getHeadPosition, getElementByXY, getLength, checkFly, checkFury, getWayLength, movieDirection, getBoardFullArray
 } from './utils';
-import {
-    getBaseWay, buildWayByAxe
-} from './wayUtils';
+import { findWays } from './wayUtils';
+import { getNextPosition } from './selectWaysUtils';
 
 // Bot Example
 let boardFullArray = [];
@@ -49,14 +48,9 @@ export function getNextSnakeMove(board, logger) {
     isFury = checkFury(board, isFury);
     ////// end INIT /////
 
-    // const WAYx = getBaseWay(boardFullArray, {x: 3, y: 8}, {x: 9, y: 11}, 'x');
-    // const WAYy = getBaseWay(boardFullArray, {x: 3, y: 8}, {x: 9, y: 11}, 'y');
+    const WAY = findWays (boardFullArray, {x: 14, y: 7}, {x: 3, y: 8}, 7);
 
-    const WAYx = buildWayByAxe (boardFullArray, {x: 23, y: 24}, {x: 19, y: 15}, 'x', 7);
-    // const WAYx = buildWayByAxe (boardFullArray, {x: 6, y: 13}, {x: 10, y: 4}, 'x', 7);
-    // const WAYx2 = buildWayByAxe (boardFullArray, {x: 6, y: 5}, {x: 9, y: 11}, 'x', 7, WAYx);
-    // const WAYy = buildWayByAxe (boardFullArray, {x: 6, y: 5}, {x: 9, y: 11}, 'y', 7);
-    console.log('WAY x', WAYx)
+    console.log('WAY', WAY)
     // console.log('WAY x2', WAYx2)
     // console.log('WAY y', WAYy)
 
@@ -162,11 +156,11 @@ function getCommandByElement(board) {
     const headPosition = getHeadPosition(board);
     // const position = getNextPosition(boardFullArray, headPosition, 'APPLE');
 
-    const positionApple = getNextPosition(boardFullArray, headPosition, 'APPLE');
-    const positionGold = getNextPosition(boardFullArray, headPosition, 'GOLD');
-    const positionStone = getNextPosition(boardFullArray, headPosition, 'STONE');
-    const positionFury = getNextPosition(boardFullArray, headPosition, 'FURY_PILL');
-    const positionEnemy = getNextPosition(boardFullArray, headPosition, ['ENEMY_BODY_HORIZONTAL', 'ENEMY_BODY_VERTICAL', 'ENEMY_BODY_LEFT_DOWN', 'ENEMY_BODY_LEFT_UP', 'ENEMY_BODY_RIGHT_DOWN', 'ENEMY_BODY_RIGHT_UP']);
+    const positionApple = getNextPosition(boardFullArray, headPosition, 'APPLE', snakeLength);
+    const positionGold = getNextPosition(boardFullArray, headPosition, 'GOLD', snakeLength);
+    const positionStone = getNextPosition(boardFullArray, headPosition, 'STONE', snakeLength);
+    const positionFury = getNextPosition(boardFullArray, headPosition, 'FURY_PILL', snakeLength);
+    const positionEnemy = getNextPosition(boardFullArray, headPosition, ['ENEMY_BODY_HORIZONTAL', 'ENEMY_BODY_VERTICAL', 'ENEMY_BODY_LEFT_DOWN', 'ENEMY_BODY_LEFT_UP', 'ENEMY_BODY_RIGHT_DOWN', 'ENEMY_BODY_RIGHT_UP'], snakeLength);
 
     const lengthToApple = getWayLength(headPosition, positionApple);
     const lengthToGold = getWayLength(headPosition, positionGold);
@@ -181,7 +175,7 @@ function getCommandByElement(board) {
     let currentPosition = headPosition;
 
     for(let i = 0; i < 4; i++){
-        const nextPosition = getNextPosition(boardFullArray, currentPosition, 'APPLE', previousPositions);
+        const nextPosition = getNextPosition(boardFullArray, currentPosition, 'APPLE', snakeLength, previousPositions);
         lengthToApples += getWayLength(currentPosition, nextPosition);
         previousPositions.push(currentPosition);
         currentPosition = nextPosition;

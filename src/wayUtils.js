@@ -1,6 +1,6 @@
 import { ELEMENT } from './constants';
 
-export function getBaseWay(boardArr, from, to, axe = 'x'){
+export function getBaseWay(boardArr, from, to, axe = 'x', isFury){
     const length = {x: to.x - from.x, y: to.y - from.y};
     const lengthAbs = {x: Math.abs(length.x), y: Math.abs(length.y)};
 
@@ -30,11 +30,33 @@ export function getBaseWay(boardArr, from, to, axe = 'x'){
     }
     // return {x: wayByAxe('x'), y: wayByAxe('y')}
 
-    return checkWay(wayByAxe())
+    return checkWay(wayByAxe(), isFury)
 }
 
-function checkWay(way, snakeLength = 7){
-    const blockElements = [ELEMENT.WALL, ELEMENT.START_FLOOR];
+function checkWay(way, snakeLength = 7, isFury){
+    const blockElements = [
+        ELEMENT.WALL,
+        ELEMENT.START_FLOOR,
+        ELEMENT.HEAD_DOWN,
+        ELEMENT.HEAD_LEFT,
+        ELEMENT.HEAD_RIGHT,
+        ELEMENT.HEAD_UP,
+        ELEMENT.HEAD_EVIL,
+        ELEMENT.HEAD_FLY,
+        ELEMENT.HEAD_SLEEP,
+        ELEMENT.TAIL_END_DOWN,
+        ELEMENT.TAIL_END_LEFT,
+        ELEMENT.TAIL_END_UP,
+        ELEMENT.TAIL_END_RIGHT,
+        ELEMENT.TAIL_INACTIVE,
+        ELEMENT.BODY_HORIZONTAL,
+        ELEMENT.BODY_VERTICAL,
+        ELEMENT.BODY_LEFT_DOWN,
+        ELEMENT.BODY_LEFT_UP,
+        ELEMENT.BODY_RIGHT_DOWN,
+        ELEMENT.BODY_RIGHT_UP
+    ];
+    if(!isFury){blockElements.push(ELEMENT.ENEMY_STRING)}
     if(snakeLength < 6){blockElements.push(ELEMENT.STONE)}
     const cleanWay = [];
     let isBreak = false;
@@ -60,8 +82,30 @@ function checkWay(way, snakeLength = 7){
     return {way: cleanWay, isBreak: isBreak, wayAxe: wayAxe, waySign: waySign}
 }
 
-function buildBypassWay(boardArr, {way, wayAxe, waySign}, to, direction, snakeLength = 7){
-    const blockElements = [ELEMENT.WALL, ELEMENT.START_FLOOR];
+function buildBypassWay(boardArr, {way, wayAxe, waySign}, to, direction, snakeLength = 7, isFury){
+    const blockElements = [
+        ELEMENT.WALL,
+        ELEMENT.START_FLOOR,
+        ELEMENT.HEAD_DOWN,
+        ELEMENT.HEAD_LEFT,
+        ELEMENT.HEAD_RIGHT,
+        ELEMENT.HEAD_UP,
+        ELEMENT.HEAD_EVIL,
+        ELEMENT.HEAD_FLY,
+        ELEMENT.HEAD_SLEEP,
+        ELEMENT.TAIL_END_DOWN,
+        ELEMENT.TAIL_END_LEFT,
+        ELEMENT.TAIL_END_UP,
+        ELEMENT.TAIL_END_RIGHT,
+        ELEMENT.TAIL_INACTIVE,
+        ELEMENT.BODY_HORIZONTAL,
+        ELEMENT.BODY_VERTICAL,
+        ELEMENT.BODY_LEFT_DOWN,
+        ELEMENT.BODY_LEFT_UP,
+        ELEMENT.BODY_RIGHT_DOWN,
+        ELEMENT.BODY_RIGHT_UP
+    ];
+    if(!isFury){blockElements.push(ELEMENT.ENEMY_STRING)}
     if(snakeLength < 6){blockElements.push(ELEMENT.STONE)}
     let newWay = [...way];
     function buildStep(){
@@ -125,22 +169,23 @@ function stepper(way, stepDirection, wayAxe, waySign){
     return null
 }
 
-export function buildWayByAxe (oldBoardArr, from, to, axe, snakeLength, addWay = []){
+export function buildWayByAxe (oldBoardArr, from, to, axe, isFury, snakeLength, addWay = []){
     const newAddWay = [...addWay];
     newAddWay.pop();
     const newBaseWay = getBaseWay(oldBoardArr, from, to, axe);
+    // const newBaseWay = getBaseWay(oldBoardArr, from, to, axe, isFury);
     const baseWay = {...newBaseWay, way: [...newAddWay, ...newBaseWay.way]};
     if (!newBaseWay.isBreak) return baseWay.way;
 
     function bypassBuilder(Way, boardArr){
-        const leftBypass = buildBypassWay(boardArr, Way, to, 'left', snakeLength);
-        const rightBypass = buildBypassWay(boardArr, Way, to, 'right', snakeLength);
+        const leftBypass = buildBypassWay(boardArr, Way, to, 'left', snakeLength, isFury);
+        const rightBypass = buildBypassWay(boardArr, Way, to, 'right', snakeLength, isFury);
         let leftCalcWay;
         let rightCalcWay;
         if(leftBypass){
             const fromLeft = leftBypass[leftBypass.length - 1];
-            const leftX = buildWayByAxe(boardArr, fromLeft, to, 'x', snakeLength, leftBypass);
-            const leftY = buildWayByAxe(boardArr, fromLeft, to, 'y', snakeLength, leftBypass);
+            const leftX = buildWayByAxe(boardArr, fromLeft, to, 'x', isFury, snakeLength, leftBypass);
+            const leftY = buildWayByAxe(boardArr, fromLeft, to, 'y', isFury, snakeLength, leftBypass);
             if(leftX && leftY){
                 leftCalcWay = leftX.length < leftY.length ? leftX : leftY;
             }else{
@@ -150,8 +195,8 @@ export function buildWayByAxe (oldBoardArr, from, to, axe, snakeLength, addWay =
         }
         if(rightBypass){
             const fromRight = rightBypass[rightBypass.length - 1];
-            const rightX = buildWayByAxe(boardArr, fromRight, to, 'x', snakeLength, rightBypass);
-            const rightY = buildWayByAxe(boardArr, fromRight, to, 'y', snakeLength, rightBypass);
+            const rightX = buildWayByAxe(boardArr, fromRight, to, 'x', isFury, snakeLength, rightBypass);
+            const rightY = buildWayByAxe(boardArr, fromRight, to, 'y', isFury, snakeLength, rightBypass);
             if(rightX && rightY){
                 rightCalcWay = rightX.length < rightY.length ? rightX : rightY;
             }else{
@@ -208,15 +253,15 @@ function setBrokenLine (boardArr, axe, point){
     return newBoardArr
 }
 
-export function findWays (oldBoardArr, from, to, snakeLength){
+export function findWays (oldBoardArr, from, to, snakeLength, isFury){
     const boardArr = oldBoardArr.map(item => {
         return {x: item.x, y: item.y, el: item.el}
     });
     const boardArr2 = oldBoardArr.map(item => {
         return {x: item.x, y: item.y, el: item.el}
     });
-    const waysByY = buildWayByAxe (boardArr, from, to, 'y', snakeLength);
-    const waysByX = buildWayByAxe (boardArr2, from, to, 'x', snakeLength);
+    const waysByY = buildWayByAxe (boardArr, from, to, 'y', isFury, snakeLength);
+    const waysByX = buildWayByAxe (boardArr2, from, to, 'x', isFury, snakeLength);
     if( waysByY && waysByX ){
         return waysByY > waysByX ? waysByX : waysByY
     }

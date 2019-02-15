@@ -44,6 +44,7 @@ const elementsWeight = {
 };
 
 export function getNextSnakeMove(board, logger) {
+    // console.time();
     ////// start INIT /////
     init(board);
     if(count === 10){
@@ -55,6 +56,7 @@ export function getNextSnakeMove(board, logger) {
     isFly = checkFly(board);
     isFury = checkFury(board, isFury);
     ////// end INIT /////
+    /////////---------
     fullElements = getFullElements(boardFullArray, ['GOLD', 'APPLE', 'STONE', 'FURY_PILL']);
 
 
@@ -70,15 +72,38 @@ export function getNextSnakeMove(board, logger) {
     if (!headPosition) {
         return '';
     }
-    setElementsWeight(headPosition);
+
+    //////////-------
+    // setElementsWeight(headPosition);
+
+    ////////////------------
 
     const selectedWays = selectWays(boardFullArray, fullElements, headPosition, elementsWeight, snakeLength, isFury);
+
     const calculatedWay = calcWay(boardFullArray, fullElements, elementsWeight, snakeLength, selectedWays);
-    console.log('calculatedWay', calculatedWay, headPosition);
-    const nextStep = calculatedWay && calculatedWay.way && calculatedWay.way.length > 1 ? calculatedWay.way[1] : null;
+
+    // console.log('calculatedWay', calculatedWay, headPosition);
+    let nextStep = calculatedWay && calculatedWay.way && calculatedWay.way.length > 1 ? calculatedWay.way[1] : null;
+
+    // let enemyHead;
+    // if(nextStep){
+    //     const nextStepSurround = getSurround(board, nextStep); // (LEFT, UP, RIGHT, DOWN)
+    //     enemyHead = isEnemyHead(nextStepSurround);
+    // }
+    //
+    // if(enemyHead){
+    //     const target = calculatedWay.way.slice(-1);
+    //     const brokenIndex = boardFullArray.findIndex(el => el.x === nextStep.x && el.y === nextStep.y);
+    //     boardFullArray[brokenIndex] = {...boardFullArray[brokenIndex], el: ELEMENT.STONE};
+    //     const nextWay = findWays (boardFullArray, headPosition, target, snakeLength, isFury);
+    //     nextStep = nextStep = nextWay && nextWay.way && nextWay.way.length > 1 ? nextWay.way[1] : null;
+    // }
+    // console.log('enemyHead', enemyHead);
 
 
-    const elCommands = movieDirection(nextStep, headPosition);
+    const elCommands = nextStep ? movieDirection(nextStep, headPosition) : '';
+    //////////------------////////////
+
     //////////////////////////////////////////////////
     logger('Head:' + JSON.stringify(headPosition));
 
@@ -96,12 +121,16 @@ export function getNextSnakeMove(board, logger) {
     // console.log('command2', command)
     // let command = getCommandByRaitings(raitings, elCommands);
     // console.log('command3', command)
-    console.log('c')
+    // console.log('c')
 
     // console.log('searchGold(board)', getCommandByElement(board, 'APPLE'))
+
+    ////////////---------
     lastPosition = headPosition;
+    // console.log('direction', command);
     // return command;
     console.log('direction', elCommands);
+    // console.timeEnd();
     return elCommands;
 }
 function setElementsWeight(headPosition){
@@ -111,7 +140,7 @@ function setElementsWeight(headPosition){
     const positionFury = getNextPosition(boardFullArray, headPosition, 'FURY_PILL', snakeLength);
     const positionEnemy = getNextPosition(boardFullArray, headPosition, ['ENEMY_BODY_HORIZONTAL', 'ENEMY_BODY_VERTICAL', 'ENEMY_BODY_LEFT_DOWN', 'ENEMY_BODY_LEFT_UP', 'ENEMY_BODY_RIGHT_DOWN', 'ENEMY_BODY_RIGHT_UP'], snakeLength);
 
-    const wayFromFuryToStone = findWays (boardFullArray, positionFury, positionStone, snakeLength);
+    // const wayFromFuryToStone = findWays (boardFullArray, positionFury, positionStone, snakeLength);
     const wayToApple = findWays (boardFullArray, headPosition, positionApple, snakeLength);
     const wayToGold = findWays (boardFullArray, headPosition, positionGold, snakeLength);
     const wayToStone = findWays (boardFullArray, headPosition, positionStone, snakeLength);
@@ -120,7 +149,7 @@ function setElementsWeight(headPosition){
 
     if(snakeLength < 5) {
         elementsWeight.STONE = 0;
-        elementsWeight.APPLE = 2.5
+        elementsWeight.APPLE = 3
     }
     if(snakeLength < 8) {
         elementsWeight.STONE = 1;
@@ -130,23 +159,23 @@ function setElementsWeight(headPosition){
         elementsWeight.STONE = 5;
     }
 
-    if(isFury && isFury > wayToStone.length + 1) {
+    if(isFury && wayToStone && isFury > wayToStone.length + 1) {
         elementsWeight.STONE = 10;
         elementsWeight.APPLE = 0;
         elementsWeight.GOLD = 4;
     }
-    if(isFury && isFury > wayToEnemy.length + 1) {
+    if(isFury && wayToEnemy && isFury > wayToEnemy.length + 1) {
         elementsWeight.ENEMY = 30;
         elementsWeight.APPLE = 0;
         elementsWeight.GOLD = 4;
     }
-    if(wayToApple.length < 4) {elementsWeight.APPLE = 10};
-    if(wayToApple.length < 3) {elementsWeight.APPLE = 15};
-    if(wayToApple.length < 2) {elementsWeight.APPLE = 20};
-    if(wayToGold.length < 4) {elementsWeight.GOLD = 50};
-    if(wayToGold.length < 6) {elementsWeight.GOLD = 30};
+    if(wayToApple && wayToApple.length < 4) {elementsWeight.APPLE = 15};
+    if(wayToApple && wayToApple.length < 3) {elementsWeight.APPLE = 18};
+    if(wayToApple && wayToApple.length < 2) {elementsWeight.APPLE = 20};
+    if(wayToGold && wayToGold.length < 4) {elementsWeight.GOLD = 50};
+    if(wayToGold && wayToGold.length < 6) {elementsWeight.GOLD = 30};
 
-    console.log('elementsWeight.STONE', elementsWeight.STONE);
+    // console.log('elementsWeight.STONE', elementsWeight.STONE);
 }
 
 function init (board){
@@ -167,6 +196,10 @@ function init (board){
             return item
         }
     });
+}
+
+function isEnemyHead(stepSurround){
+    return stepSurround.findIndex(el => ELEMENT.ENEMY_HEAD.indexOf(el) !== -1) !== -1
 }
 
 function getSurround(board, position) {
